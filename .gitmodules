@@ -1,0 +1,6 @@
+[submodule "components/esp32-midi"]
+	path = components/esp32-midi
+	url = https://github.com/Carbon225/esp32-midi.git
+[submodule "components/esp32-i2sbuf"]
+	path = components/esp32-i2sbuf
+	url = https://github.com/Carbon225/esp32-i2sbuf.git
