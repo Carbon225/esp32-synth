@@ -23,11 +23,12 @@ static const char TAG[] = "main";
 
 static SerialMIDI g_midi;
 static Synth g_synth;
+static SemaphoreHandle_t g_synth_mtx;
 
 
 static void audio_callback(int16_t buf[][2], int n_samples, void *user_data)
 {
-    // TODO queue for key events
+    xSemaphoreTake(g_synth_mtx, portMAX_DELAY);
 	for (int i = 0; i < n_samples; ++i)
 	{
 		float left, right;
@@ -36,16 +37,21 @@ static void audio_callback(int16_t buf[][2], int n_samples, void *user_data)
 		buf[i][0] = (int16_t) (left * (float) INT16_MAX);
 		buf[i][1] = (int16_t) (right * (float) INT16_MAX);
 	}
+	xSemaphoreGive(g_synth_mtx);
 }
 
 static void note_on(uint8_t note)
 {
+	xSemaphoreTake(g_synth_mtx, portMAX_DELAY);
     g_synth.pressKey(note);
+	xSemaphoreGive(g_synth_mtx);
 }
 
 static void note_off(uint8_t note)
 {
+	xSemaphoreTake(g_synth_mtx, portMAX_DELAY);
     g_synth.releaseKey(note);
+	xSemaphoreGive(g_synth_mtx);
 }
 
 static void handle_midi_message(midi_message_t msg)
@@ -131,6 +137,8 @@ static void handle_midi_message(midi_message_t msg)
 extern "C" void app_main(void)
 {
     ESP_LOGI(TAG, "Starting");
+
+	g_synth_mtx = xSemaphoreCreateMutex();
 
     i2sbuf_config_t config = {
         .i2s_port = I2S_NUM,
