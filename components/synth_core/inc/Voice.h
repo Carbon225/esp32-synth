@@ -24,7 +24,7 @@ public:
         DECAY_FEEDBACK,
     };
 
-    void pressKey(int key);
+    void pressKey(int key, int vel);
 
     void releaseKey();
 
@@ -122,7 +122,7 @@ private:
     int _pressed_key = 0;
 
     // synth variables
-    const float _master_volume = 1.f;
+    float _master_volume = 1.f;
 
     // OSCs
     const float _dt = 1.f / 44100.f;
@@ -144,7 +144,7 @@ private:
 
     // envelope generator
     const float _attack = 0.01f;
-    const float _decay = 0.6f;
+    const float _decay = 0.5f;
     const float _sustain = 0.f;
 
     float _amplitude = 0.f;

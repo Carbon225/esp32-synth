@@ -36,10 +36,10 @@ static void audio_callback(int16_t buf[][2], int n_samples, void *user_data)
 	xSemaphoreGive(g_synth_mtx);
 }
 
-static void note_on(uint8_t note)
+static void note_on(uint8_t note, uint8_t vel)
 {
 	xSemaphoreTake(g_synth_mtx, portMAX_DELAY);
-    g_synth.pressKey(note);
+    g_synth.pressKey(note, vel);
 	xSemaphoreGive(g_synth_mtx);
 }
 
@@ -109,7 +109,7 @@ static void handle_midi_message(midi_message_t msg)
 	case midi_event_t::NoteOn:
 		ESP_LOGI(TAG, "Note on %d %d", msg.data[0], msg.data[1]);
         // velocity 0 is note off
-        msg.data[1] != 0 ? note_on(msg.data[0]) : note_off(msg.data[0]);
+        msg.data[1] != 0 ? note_on(msg.data[0], msg.data[1]) : note_off(msg.data[0]);
 		break;
 
 	case midi_event_t::PolyPressure:

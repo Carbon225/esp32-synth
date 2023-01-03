@@ -7,9 +7,9 @@
 class Synth
 {
 public:
-    void pressKey(int key)
+    void pressKey(int key, int vel)
     {
-        _sched.pressKey(key);
+        _sched.pressKey(key, vel);
     }
 
     void releaseKey(int key)

@@ -28,11 +28,12 @@ Voice::Voice() noexcept
     }
 }
 
-void Voice::pressKey(int key)
+void Voice::pressKey(int key, int vel)
 {
     _is_ascending = true;
     _pressed_key = key;
     _main_frequency = FREQS[key];
+    _master_volume = static_cast<float>(vel) / 127.f;
 }
 
 void Voice::releaseKey()

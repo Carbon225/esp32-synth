@@ -9,7 +9,7 @@ class VoiceSched
 public:
     static constexpr int NUM_VOICES = 8;
 
-    void pressKey(int key)
+    void pressKey(int key, int vel)
     {
         auto best_voice = _voices.begin();
 
@@ -34,7 +34,7 @@ public:
             // }
         }
 
-        best_voice->pressKey(key);
+        best_voice->pressKey(key, vel);
     }
 
     void releaseKey(int key)
