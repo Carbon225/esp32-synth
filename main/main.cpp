@@ -1,4 +1,3 @@
-#include <tuple>
 #include <i2sbuf.h>
 #include <Synth.h>
 #include <esp32_midi.h>
@@ -15,10 +14,10 @@ static const char TAG[] = "main";
 #define I2S_DO (GPIO_NUM_17)
 #define I2S_CK (GPIO_NUM_5)
 
-#define SAMPLE_RATE (48000)
+#define SAMPLE_RATE (44100)
 
-#define BUF_LEN (256)
-#define BUF_COUNT (4)
+#define BUF_LEN (64)
+#define BUF_COUNT (2)
 
 
 static SerialMIDI g_midi;
@@ -31,11 +30,8 @@ static void audio_callback(int16_t buf[][2], int n_samples, void *user_data)
     xSemaphoreTake(g_synth_mtx, portMAX_DELAY);
 	for (int i = 0; i < n_samples; ++i)
 	{
-		float left, right;
-        std::tie(left, right) = g_synth.getSample();
-
-		buf[i][0] = (int16_t) (left * (float) INT16_MAX);
-		buf[i][1] = (int16_t) (right * (float) INT16_MAX);
+		float sample = g_synth.getSample();
+		buf[i][0] = buf[i][1] = (int16_t) (sample * (float) INT16_MAX);
 	}
 	xSemaphoreGive(g_synth_mtx);
 }
@@ -146,7 +142,7 @@ extern "C" void app_main(void)
         .do_io = I2S_DO,
         .clk_io = I2S_CK,
         .sample_rate = SAMPLE_RATE,
-        .use_apll = false,
+        .use_apll = true,
         .buf_len = BUF_LEN,
         .buf_count = BUF_COUNT,
         .callback = audio_callback,

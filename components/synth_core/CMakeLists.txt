@@ -3,9 +3,7 @@ idf_component_register(
         inc/Voice.h
         Voice.cpp
         inc/VoiceSched.h
-        VoiceSched.cpp
         inc/Synth.h
-        Synth.cpp
     INCLUDE_DIRS inc
 )
 

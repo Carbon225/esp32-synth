@@ -7,13 +7,51 @@
 class VoiceSched
 {
 public:
-    static constexpr int NUM_VOICES = 4;
+    static constexpr int NUM_VOICES = 8;
 
-    void pressKey(int key);
+    void pressKey(int key)
+    {
+        auto best_voice = _voices.begin();
 
-    void releaseKey(int key);
+        for (auto voice = _voices.begin() + 1;
+            voice != _voices.cend();
+            ++voice)
+        {
+            if (!voice->isPressed())
+            {
+                best_voice = voice;
+                break;
+            }
 
-    std::array<Voice, NUM_VOICES>& voices();
+            if (voice->pressedKey() < best_voice->pressedKey())
+            {
+                best_voice = voice;
+            }
+
+            // if (voice->volume() < best_voice->volume())
+            // {
+            //     best_voice = voice;
+            // }
+        }
+
+        best_voice->pressKey(key);
+    }
+
+    void releaseKey(int key)
+    {
+        for (auto &v : _voices)
+        {
+            if (v.isPressed() && v.pressedKey() == key)
+            {
+                v.releaseKey();
+            }
+        }
+    }
+
+    std::array<Voice, NUM_VOICES>& voices()
+    {
+        return _voices;
+    }
 
 private:
     std::array<Voice, NUM_VOICES> _voices;
