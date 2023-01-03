@@ -7,7 +7,7 @@
 class VoiceSched
 {
 public:
-    static constexpr int NUM_VOICES = 8;
+    static constexpr int NUM_VOICES = 4;
 
     void pressKey(int key);
 

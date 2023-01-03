@@ -43,7 +43,7 @@ private:
     float getDelayRight() const;
     float getDelayLeft() const;
 
-    static constexpr int OSC_NUMBER = 2;
+    static constexpr int OSC_NUMBER = 1;
 
     // keys
     int _pressed_key = 0;
@@ -55,7 +55,7 @@ private:
     const float _dt = 1.f / 48000.f;
     float _main_frequency = 0.f;
     std::array<float, OSC_NUMBER> _phases {};
-    const std::array<float, OSC_NUMBER> _osc_ratio {1.0f, 1.0f};
+    const std::array<float, OSC_NUMBER> _osc_ratio {1.0f};
     const float _detune = 1.005f;
     std::array<float, OSC_NUMBER> _osc_volume {};
     float _temp_detune = 1.f;
@@ -76,14 +76,6 @@ private:
 
     float _amplitude = 0.f;
     bool _is_ascending = false;
-
-    // delay
-    const int _delay_length = 30000;
-    std::array<int16_t, 36000> _samples_left {};
-    std::array<int16_t, 36000> _samples_right {};
-    int _write_point_left = 0;
-    int _write_point_right = 14999;
-    const float _feedback = 0.5f;
 };
 
 #endif

@@ -101,16 +101,6 @@ std::pair<float, float> Voice::getSample()
 
     float audio_output = 0.1f * _buf[3] * _amplitude * _master_volume;
 
-    _samples_left[_write_point_left] = _feedback * (30000.f * audio_output + _samples_left[_write_point_left]);
-    _write_point_left++;
-    if (_write_point_left >= _delay_length)
-        _write_point_left = 0;
-
-    _samples_right[_write_point_right] = _feedback * (30000.f * audio_output + _samples_right[_write_point_right]);
-    _write_point_right++;
-    if (_write_point_right >= _delay_length)
-        _write_point_right = 0;
-
     return {
         atanf(audio_output + getDelayLeft()),
         atanf(audio_output + getDelayRight())
@@ -139,12 +129,12 @@ float Voice::polyBlep(float t) const
 
 float Voice::getDelayRight() const
 {
-    return (float) _samples_right[_write_point_right] / 32000.f;
+    return 0.f;
 }
 
 float Voice::getDelayLeft() const
 {
-    return (float) _samples_right[_write_point_left] / 32000.f;
+    return 0.f;
 }
 
 bool Voice::isPressed() const
