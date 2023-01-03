@@ -6,8 +6,8 @@
 static const char TAG[] = "main";
 
 
-#define MIDI_UART UART_NUM_1
-#define MIDI_RX_GPIO GPIO_NUM_21
+#define MIDI_UART UART_NUM_0
+#define MIDI_RX_GPIO GPIO_NUM_3
 
 #define I2S_NUM (I2S_NUM_0)
 #define I2S_WS (GPIO_NUM_16)
