@@ -7,6 +7,9 @@
 static const char TAG[] = "main";
 
 
+#define MIDI_UART UART_NUM_1
+#define MIDI_RX_GPIO GPIO_NUM_21
+
 #define I2S_NUM (I2S_NUM_0)
 #define I2S_WS (GPIO_NUM_16)
 #define I2S_DO (GPIO_NUM_17)
@@ -18,11 +21,13 @@ static const char TAG[] = "main";
 #define BUF_COUNT (4)
 
 
+static SerialMIDI g_midi;
 static Synth g_synth;
 
 
 static void audio_callback(int16_t buf[][2], int n_samples, void *user_data)
 {
+    // TODO queue for key events
 	for (int i = 0; i < n_samples; ++i)
 	{
 		float left, right;
@@ -30,6 +35,96 @@ static void audio_callback(int16_t buf[][2], int n_samples, void *user_data)
 
 		buf[i][0] = (int16_t) (left * (float) INT16_MAX);
 		buf[i][1] = (int16_t) (right * (float) INT16_MAX);
+	}
+}
+
+static void note_on(uint8_t note)
+{
+    g_synth.pressKey(note);
+}
+
+static void note_off(uint8_t note)
+{
+    g_synth.releaseKey(note);
+}
+
+static void handle_midi_message(midi_message_t msg)
+{
+	switch (msg.event)
+	{
+	// 0 data bytes
+	case midi_event_t::TimingClock:
+		ESP_LOGI(TAG, "Timing clock");
+		break;
+
+	case midi_event_t::Undefined:
+		ESP_LOGI(TAG, "Undefined");
+		break;
+
+	case midi_event_t::Start:
+		ESP_LOGI(TAG, "Start");
+		break;
+
+	case midi_event_t::Continue:
+		ESP_LOGI(TAG, "Continue");
+		break;
+
+	case midi_event_t::Stop:
+		ESP_LOGI(TAG, "Stop");
+		break;
+
+	case midi_event_t::ActiveSense:
+		ESP_LOGI(TAG, "Active sense");
+		break;
+
+	case midi_event_t::SystemReset:
+		ESP_LOGI(TAG, "System reset");
+		break;
+
+	// 1 data byte
+	case midi_event_t::ProgramChange:
+		ESP_LOGI(TAG, "Program change");
+		break;
+
+	case midi_event_t::ChannelPressure:
+		ESP_LOGI(TAG, "Channel pressure");
+		break;
+
+	case midi_event_t::MidiTimeCode:
+		ESP_LOGI(TAG, "Midi time code");
+		break;
+
+	case midi_event_t::SongSelect:
+		ESP_LOGI(TAG, "System reset");
+		break;
+
+	// 2 data bytes
+	case midi_event_t::NoteOff:
+		ESP_LOGI(TAG, "Note off");
+        note_off(msg.data[0]);
+		break;
+
+	case midi_event_t::NoteOn:
+		ESP_LOGI(TAG, "Note on %d %d", msg.data[0], msg.data[1]);
+        // velocity 0 is note off
+        msg.data[1] != 0 ? note_on(msg.data[0]) : note_off(msg.data[0]);
+		break;
+
+	case midi_event_t::PolyPressure:
+		ESP_LOGI(TAG, "Poly pressure");
+		break;
+
+	case midi_event_t::ControlChange:
+		ESP_LOGI(TAG, "Control change %d %d", msg.data[0], msg.data[1]);
+		break;
+
+	case midi_event_t::PitchBend:
+		ESP_LOGI(TAG, "Pitch bend");
+		break;
+
+	case midi_event_t::SongPosition:
+		ESP_LOGI(TAG, "Song position");
+		break;
 	}
 }
 
@@ -51,6 +146,9 @@ extern "C" void app_main(void)
     };
 
     ESP_ERROR_CHECK(i2sbuf_install(&config));
+
+    ESP_ERROR_CHECK(g_midi.RegisterCallback(handle_midi_message));
+	ESP_ERROR_CHECK(g_midi.Install(MIDI_UART, MIDI_RX_GPIO));
 
     ESP_LOGI(TAG, "Running");
 }
