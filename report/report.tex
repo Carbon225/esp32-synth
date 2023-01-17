@@ -1,0 +1,104 @@
+\documentclass[12pt,a4paper,openright,dvipsnames]{mwart}
+
+\usepackage{lmodern}
+\usepackage[T1]{polski}
+\usepackage[utf8]{inputenc}
+
+\usepackage[a4paper,
+            tmargin=2cm,
+            bmargin=2cm,
+            lmargin=2cm,
+            rmargin=2cm,
+            bindingoffset=0cm]{geometry}
+
+\usepackage{tocloft}
+\usepackage{hyperref}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{siunitx}
+
+\usepackage{listings}
+
+\usepackage{graphicx}
+\usepackage{subfig}
+\usepackage{float}
+\usepackage{booktabs}
+
+\usepackage{xcolor}
+
+
+\hypersetup{
+    colorlinks,
+    citecolor=black,
+    filecolor=black,
+    linkcolor=black,
+    urlcolor=black
+}
+
+
+\newcommand{\vtitle}{ESP32 Synthesizer}
+\newcommand{\vauthors}{
+    Jakub Karbowski
+}
+
+
+\begin{document}
+\begin{titlepage}
+    \centering
+
+    \textsc{Akademia Górniczo-Hutnicza im. Stanisława Staszica w Krakowie}
+
+    \vspace{\stretch{1}}
+
+    {\LARGE\bfseries \vtitle\\}
+    \rule{3in}{0.4pt} \\
+    \today
+
+    \vspace{\stretch{1}}
+
+    \large\vauthors
+
+    \vspace*{\stretch{2}}
+
+\end{titlepage}
+
+
+
+\section{Wstęp}
+
+Celem projektu było zbudowanie syntezatora cyfrowego na
+platformie ESP32. Syntezator ten ma być w stanie odtwarzać
+dźwięki na podstawie komend MIDI, które będą przesyłane
+do niego przez port szeregowy.
+Taki interfejs pozwala na łatwe połączenie z komputerem lub
+keyboardem MIDI.
+
+
+\section{Specyfikacja}
+
+Syntezator ma obsługiwać następujące funkcje:
+\begin{enumerate}
+    \item dekodowanie pełnego zestawu komend MIDI,
+    \item polifonię na przynajmniej 4 głosy,
+    \item funkcję ADSR (Attack, Decay, Sustain, Release),
+    \item oscylatory piłokształtne,
+    \item odtwarzanie dźwięku przez DAC protokołem I2S.
+\end{enumerate}
+
+
+\section{Zbudowana platforma}
+
+Użyte komponenty:
+\begin{enumerate}
+    \item ESP32 DevKitC,
+    \item Adafruit UDA1334A I2S DAC,
+    \item głośnik, który znalazłem w śmieciach.
+\end{enumerate}
+
+
+
+
+
+
+\end{document}
