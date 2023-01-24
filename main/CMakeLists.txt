@@ -6,4 +6,6 @@ idf_component_register(
         synth_core
         esp32-midi
         esp32-i2sbuf
+        lvgl_esp32_drivers
+        lvgl
 )

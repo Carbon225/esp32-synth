@@ -1,10 +1,14 @@
 #include <i2sbuf.h>
 #include <Synth.h>
 #include <esp32_midi.h>
+#include <lvgl.h>
+#include <lvgl_helpers.h>
 
 #include <esp_log.h>
 static const char TAG[] = "main";
 
+
+#define LV_TICK_PERIOD_MS 1
 
 #define MIDI_UART UART_NUM_0
 #define MIDI_RX_GPIO GPIO_NUM_3
@@ -130,29 +134,135 @@ static void handle_midi_message(midi_message_t msg)
 	}
 }
 
+static void btn_event_cb(lv_obj_t * btn, lv_event_t event)
+{
+    if(event == LV_EVENT_CLICKED) {
+        static uint8_t cnt = 0;
+        cnt++;
+
+        /*Get the first child of the button which is the label and change its text*/
+        lv_obj_t * label = lv_obj_get_child(btn, NULL);
+        lv_label_set_text_fmt(label, "Button: %d", cnt);
+    }
+}
+
+/**
+ * Create a button with a label and react on Click event.
+ */
+static void lv_ex_get_started_1(void)
+{
+    lv_obj_t * btn = lv_btn_create(lv_scr_act(), NULL);     /*Add a button the current screen*/
+    lv_obj_set_pos(btn, 10, 10);                            /*Set its position*/
+    lv_obj_set_size(btn, 120, 50);                          /*Set its size*/
+    lv_obj_set_event_cb(btn, btn_event_cb);                 /*Assign a callback to the button*/
+
+    lv_obj_t * label = lv_label_create(btn, NULL);          /*Add a label to the button*/
+    lv_label_set_text(label, "Button");                     /*Set the labels text*/
+}
+
+static void lv_tick_task(void *arg) {
+    (void) arg;
+
+    lv_tick_inc(LV_TICK_PERIOD_MS);
+}
+
+static void guiTask(void *pvParameter) {
+
+    (void) pvParameter;
+    SemaphoreHandle_t xGuiSemaphore = xSemaphoreCreateMutex();
+
+    lv_init();
+
+    /* Initialize SPI or I2C bus used by the drivers */
+    lvgl_driver_init();
+
+    lv_color_t* buf1 = (lv_color_t*) heap_caps_malloc(DISP_BUF_SIZE * sizeof(lv_color_t), MALLOC_CAP_DMA);
+    assert(buf1 != NULL);
+
+    /* Use double buffered when not working with monochrome displays */
+    lv_color_t* buf2 = (lv_color_t*) heap_caps_malloc(DISP_BUF_SIZE * sizeof(lv_color_t), MALLOC_CAP_DMA);
+    assert(buf2 != NULL);
+
+
+    static lv_disp_buf_t disp_buf;
+
+    uint32_t size_in_px = DISP_BUF_SIZE;
+
+    /* Initialize the working buffer depending on the selected display.
+     * NOTE: buf2 == NULL when using monochrome displays. */
+    lv_disp_buf_init(&disp_buf, buf1, buf2, size_in_px);
+
+    lv_disp_drv_t disp_drv;
+    lv_disp_drv_init(&disp_drv);
+    disp_drv.flush_cb = disp_driver_flush;
+
+	#if defined CONFIG_DISPLAY_ORIENTATION_PORTRAIT || defined CONFIG_DISPLAY_ORIENTATION_PORTRAIT_INVERTED
+    disp_drv.rotated = 1;
+	#endif
+
+    disp_drv.buffer = &disp_buf;
+    lv_disp_drv_register(&disp_drv);
+
+	lv_indev_drv_t indev_drv;
+    lv_indev_drv_init(&indev_drv);
+    indev_drv.read_cb = touch_driver_read;
+    indev_drv.type = LV_INDEV_TYPE_POINTER;
+    lv_indev_drv_register(&indev_drv);
+
+    /* Create and start a periodic timer interrupt to call lv_tick_inc */
+    const esp_timer_create_args_t periodic_timer_args = {
+        .callback = &lv_tick_task,
+        .name = "periodic_gui"
+    };
+    esp_timer_handle_t periodic_timer;
+    ESP_ERROR_CHECK(esp_timer_create(&periodic_timer_args, &periodic_timer));
+    ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, LV_TICK_PERIOD_MS * 1000));
+
+    /* Create the demo application */
+    lv_ex_get_started_1();
+
+    while (1) {
+        /* Delay 1 tick (assumes FreeRTOS tick is 10ms */
+        vTaskDelay(pdMS_TO_TICKS(10));
+
+        /* Try to take the semaphore, call lvgl related function on success */
+        if (pdTRUE == xSemaphoreTake(xGuiSemaphore, portMAX_DELAY)) {
+            lv_task_handler();
+            xSemaphoreGive(xGuiSemaphore);
+       }
+    }
+
+    /* A task should NEVER return */
+    free(buf1);
+    free(buf2);
+    vTaskDelete(NULL);
+}
+
 extern "C" void app_main(void)
 {
-    ESP_LOGI(TAG, "Starting");
+	guiTask(NULL);
 
-	g_synth_mtx = xSemaphoreCreateMutex();
+    // ESP_LOGI(TAG, "Starting");
 
-    i2sbuf_config_t config = {
-        .i2s_port = I2S_NUM,
-        .ws_io = I2S_WS,
-        .do_io = I2S_DO,
-        .clk_io = I2S_CK,
-        .sample_rate = SAMPLE_RATE,
-        .use_apll = true,
-        .buf_len = BUF_LEN,
-        .buf_count = BUF_COUNT,
-        .callback = audio_callback,
-        .user_data = NULL,
-    };
+	// g_synth_mtx = xSemaphoreCreateMutex();
 
-    ESP_ERROR_CHECK(i2sbuf_install(&config));
+    // i2sbuf_config_t config = {
+    //     .i2s_port = I2S_NUM,
+    //     .ws_io = I2S_WS,
+    //     .do_io = I2S_DO,
+    //     .clk_io = I2S_CK,
+    //     .sample_rate = SAMPLE_RATE,
+    //     .use_apll = true,
+    //     .buf_len = BUF_LEN,
+    //     .buf_count = BUF_COUNT,
+    //     .callback = audio_callback,
+    //     .user_data = NULL,
+    // };
 
-    ESP_ERROR_CHECK(g_midi.RegisterCallback(handle_midi_message));
-	ESP_ERROR_CHECK(g_midi.Install(MIDI_UART, MIDI_RX_GPIO));
+    // ESP_ERROR_CHECK(i2sbuf_install(&config));
 
-    ESP_LOGI(TAG, "Running");
+    // ESP_ERROR_CHECK(g_midi.RegisterCallback(handle_midi_message));
+	// ESP_ERROR_CHECK(g_midi.Install(MIDI_UART, MIDI_RX_GPIO));
+
+    // ESP_LOGI(TAG, "Running");
 }
