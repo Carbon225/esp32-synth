@@ -65,6 +65,8 @@ void volume_knob_init(void)
     // install ISR service with default configuration
     gpio_install_isr_service(ESP_INTR_FLAG_IRAM);
 
+    g_last_state = gpio_get_level(VOLUME_KNOB_GPIO_A);
+
     // attach the interrupt service routine
     gpio_isr_handler_add(VOLUME_KNOB_GPIO_A, encoder_isr_handler, NULL);
 }
