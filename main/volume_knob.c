@@ -22,8 +22,8 @@ static void encoder_isr_handler(void *arg)
     bool a = gpio_get_level(VOLUME_KNOB_GPIO_A);
     bool b = gpio_get_level(VOLUME_KNOB_GPIO_B);
 
-    if (a == b) g_volume -= 2;
-    else g_volume += 2;
+    if (a == b) g_volume -= 1;
+    else g_volume += 1;
 
     if (g_volume < 0) g_volume = 0;
     else if (g_volume > VOLUME_MAX) g_volume = VOLUME_MAX;
