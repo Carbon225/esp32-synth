@@ -11,16 +11,28 @@ static const char TAG[] = "volume_knob";
 #define VOLUME_KNOB_GPIO_A 34
 #define VOLUME_KNOB_GPIO_B 35
 #define VOLUME_MAX 100
+#define DEBOUNCE_TIME_US 1000
 
 
+static bool g_last_state = false;
+static int g_last_isr = 0;
 static int g_volume = 50;
 static portMUX_TYPE g_volume_mux = portMUX_INITIALIZER_UNLOCKED;
 
 
 static IRAM_ATTR void encoder_isr_handler(void *arg)
 {
+    int now = esp_timer_get_time();
+
     bool a = gpio_get_level(VOLUME_KNOB_GPIO_A);
     bool b = gpio_get_level(VOLUME_KNOB_GPIO_B);
+
+    if (a == g_last_state) return;
+
+    if (now - g_last_isr < DEBOUNCE_TIME_US) return;
+
+    g_last_isr = now;
+    g_last_state = a;
 
     if (a == b) g_volume -= 1;
     else g_volume += 1;
