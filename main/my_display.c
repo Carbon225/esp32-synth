@@ -13,8 +13,9 @@ static const char TAG[] = "my_display";
 #define LV_TICK_PERIOD_MS 1
 
 
-SemaphoreHandle_t g_gui_sem;
-lv_obj_t *g_volume_slider;
+static SemaphoreHandle_t g_gui_sem;
+static lv_obj_t *g_volume_slider;
+static lv_obj_t *g_volume_label;
 
 
 static void lv_tick_task(void *arg)
@@ -25,10 +26,7 @@ static void lv_tick_task(void *arg)
 static void btn_event_cb(lv_obj_t * btn, lv_event_t event)
 {
     if(event == LV_EVENT_CLICKED) {
-        static uint8_t cnt = 0;
-        cnt++;
-        lv_obj_t * label = lv_obj_get_child(btn, NULL);
-        lv_label_set_text_fmt(label, "Button: %d", cnt);
+        volume_knob_override(0);
     }
 }
 
@@ -42,23 +40,31 @@ static void slider_event_cb(lv_obj_t * slider, lv_event_t event)
 
 static void lv_create_ui(void)
 {
-    lv_obj_t *scr = lv_scr_act();
+    lv_obj_t *scr, *label, *btn, *slider;
+    
+    scr = lv_scr_act();
 
-    lv_obj_t *btn = lv_btn_create(scr, NULL);
+    // mute
+    btn = lv_btn_create(scr, NULL);
     lv_obj_set_pos(btn, 10, 10);
     lv_obj_set_size(btn, 120, 50);
     lv_obj_set_event_cb(btn, btn_event_cb);
+    label = lv_label_create(btn, NULL);
+    lv_label_set_text(label, "Mute");
 
-    lv_obj_t *label = lv_label_create(btn, NULL);
-    lv_label_set_text(label, "Button");
-
-    lv_obj_t *slider = lv_slider_create(scr, NULL);
+    // volume
+    slider = lv_slider_create(scr, NULL);
     lv_obj_set_size(slider, 200, 20);
     lv_obj_align(slider, NULL, LV_ALIGN_CENTER, 0, 0);
     lv_slider_set_range(slider, 0, 100);
     lv_slider_set_value(slider, 0, LV_ANIM_OFF);
     lv_obj_set_event_cb(slider, slider_event_cb);
     g_volume_slider = slider;
+    label = lv_label_create(scr, NULL);
+    lv_label_set_text(label, "Volume: 0%%");
+    lv_obj_align(label, slider, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
+    lv_obj_set_style_local_text_font(label, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &lv_font_montserrat_16);
+    g_volume_label = label;
 }
 
 static void gui_task(void *arg)
@@ -104,13 +110,20 @@ static void gui_task(void *arg)
 
     lv_create_ui();
 
+    int last_volume = -1;
+
     for (;;)
     {
         vTaskDelay(pdMS_TO_TICKS(10));
         if (xSemaphoreTake(g_gui_sem, portMAX_DELAY) == pdTRUE)
         {
             int volume = volume_knob_get();
-            lv_slider_set_value(g_volume_slider, volume, LV_ANIM_OFF);
+            if (volume != last_volume)
+            {
+                lv_slider_set_value(g_volume_slider, volume, LV_ANIM_ON);
+                lv_label_set_text_fmt(g_volume_label, "Volume: %d%%", volume);
+                last_volume = volume;
+            }
 
             lv_task_handler();
             xSemaphoreGive(g_gui_sem);
