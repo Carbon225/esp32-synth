@@ -19,10 +19,11 @@ static portMUX_TYPE g_volume_mux = portMUX_INITIALIZER_UNLOCKED;
 
 static void encoder_isr_handler(void *arg)
 {
+    bool a = gpio_get_level(VOLUME_KNOB_GPIO_A);
     bool b = gpio_get_level(VOLUME_KNOB_GPIO_B);
 
-    if (b) g_volume += 5;
-    else g_volume -= 5;
+    if (a == b) g_volume -= 2;
+    else g_volume += 2;
 
     if (g_volume < 0) g_volume = 0;
     else if (g_volume > VOLUME_MAX) g_volume = VOLUME_MAX;
@@ -34,11 +35,11 @@ void volume_knob_init(void)
 
     // configure falling interrupt for GPIO A
     gpio_config_t io_conf;
-    io_conf.intr_type = GPIO_INTR_NEGEDGE;
+    io_conf.intr_type = GPIO_INTR_ANYEDGE;
     io_conf.pin_bit_mask = (1ULL << VOLUME_KNOB_GPIO_A);
     io_conf.mode = GPIO_MODE_INPUT;
     io_conf.pull_down_en = 0;
-    io_conf.pull_up_en = 0;
+    io_conf.pull_up_en = 1;
     gpio_config(&io_conf);
 
     // configure GPIO B as input
@@ -46,7 +47,7 @@ void volume_knob_init(void)
     io_conf.pin_bit_mask = (1ULL << VOLUME_KNOB_GPIO_B);
     io_conf.mode = GPIO_MODE_INPUT;
     io_conf.pull_down_en = 0;
-    io_conf.pull_up_en = 0;
+    io_conf.pull_up_en = 1;
     gpio_config(&io_conf);
 
     // install ISR service with default configuration
