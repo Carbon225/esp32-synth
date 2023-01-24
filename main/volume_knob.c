@@ -13,7 +13,7 @@ static const char TAG[] = "volume_knob";
 #define VOLUME_MAX 100
 
 
-static int g_volume = 0;
+static int g_volume = 50;
 static portMUX_TYPE g_volume_mux = portMUX_INITIALIZER_UNLOCKED;
 
 
