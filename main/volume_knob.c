@@ -17,7 +17,7 @@ static int g_volume = 50;
 static portMUX_TYPE g_volume_mux = portMUX_INITIALIZER_UNLOCKED;
 
 
-static void encoder_isr_handler(void *arg)
+static IRAM_ATTR void encoder_isr_handler(void *arg)
 {
     bool a = gpio_get_level(VOLUME_KNOB_GPIO_A);
     bool b = gpio_get_level(VOLUME_KNOB_GPIO_B);
@@ -51,7 +51,7 @@ void volume_knob_init(void)
     gpio_config(&io_conf);
 
     // install ISR service with default configuration
-    gpio_install_isr_service(0);
+    gpio_install_isr_service(ESP_INTR_FLAG_IRAM);
 
     // attach the interrupt service routine
     gpio_isr_handler_add(VOLUME_KNOB_GPIO_A, encoder_isr_handler, NULL);
