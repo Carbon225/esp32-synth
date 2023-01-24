@@ -30,10 +30,11 @@ static SemaphoreHandle_t g_synth_mtx;
 static void audio_callback(int16_t buf[][2], int n_samples, void *user_data)
 {
     xSemaphoreTake(g_synth_mtx, portMAX_DELAY);
+	float volume = (float) volume_knob_get() / 100.0f;
 	for (int i = 0; i < n_samples; ++i)
 	{
 		float sample = g_synth.getSample();
-		buf[i][0] = buf[i][1] = (int16_t) (sample * (float) INT16_MAX);
+		buf[i][0] = buf[i][1] = (int16_t) (volume * sample * (float) INT16_MAX);
 	}
 	xSemaphoreGive(g_synth_mtx);
 }
@@ -136,25 +137,25 @@ extern "C" void app_main(void)
 {
     ESP_LOGI(TAG, "Starting");
 
-	// g_synth_mtx = xSemaphoreCreateMutex();
+	g_synth_mtx = xSemaphoreCreateMutex();
 
-    // i2sbuf_config_t config = {
-    //     .i2s_port = I2S_NUM,
-    //     .ws_io = I2S_WS,
-    //     .do_io = I2S_DO,
-    //     .clk_io = I2S_CK,
-    //     .sample_rate = SAMPLE_RATE,
-    //     .use_apll = true,
-    //     .buf_len = BUF_LEN,
-    //     .buf_count = BUF_COUNT,
-    //     .callback = audio_callback,
-    //     .user_data = NULL,
-    // };
+    i2sbuf_config_t config = {
+        .i2s_port = I2S_NUM,
+        .ws_io = I2S_WS,
+        .do_io = I2S_DO,
+        .clk_io = I2S_CK,
+        .sample_rate = SAMPLE_RATE,
+        .use_apll = true,
+        .buf_len = BUF_LEN,
+        .buf_count = BUF_COUNT,
+        .callback = audio_callback,
+        .user_data = NULL,
+    };
 
-    // ESP_ERROR_CHECK(i2sbuf_install(&config));
+    ESP_ERROR_CHECK(i2sbuf_install(&config));
 
-    // ESP_ERROR_CHECK(g_midi.RegisterCallback(handle_midi_message));
-	// ESP_ERROR_CHECK(g_midi.Install(MIDI_UART, MIDI_RX_GPIO));
+    ESP_ERROR_CHECK(g_midi.RegisterCallback(handle_midi_message));
+	ESP_ERROR_CHECK(g_midi.Install(MIDI_UART, MIDI_RX_GPIO));
 
 	volume_knob_init();
 	my_display_init();
